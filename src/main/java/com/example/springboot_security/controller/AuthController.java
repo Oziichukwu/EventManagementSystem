@@ -1,7 +1,9 @@
 package com.example.springboot_security.controller;
 
 
+import com.example.springboot_security.dtos.request.LoginRequest;
 import com.example.springboot_security.dtos.request.UserRequest;
+import com.example.springboot_security.dtos.response.JwtTokenResponse;
 import com.example.springboot_security.dtos.response.UserResponse;
 import com.example.springboot_security.exceptions.AuthException;
 import com.example.springboot_security.services.AuthService;
@@ -16,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
-@RequestMapping("api/v1/goodyTask/auth")
+@RequestMapping("/api/v1/goodyTask/auth")
 @RestController
 public class AuthController {
 
@@ -32,5 +34,11 @@ public class AuthController {
         }catch (AuthException e){
             return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
         }
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login (@Valid @RequestBody LoginRequest loginRequest){
+        JwtTokenResponse authenticationDetails = authService.login(loginRequest);
+        return new ResponseEntity<>(authenticationDetails, HttpStatus.OK);
     }
 }
