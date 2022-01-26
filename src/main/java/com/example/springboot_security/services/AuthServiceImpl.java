@@ -1,9 +1,12 @@
 package com.example.springboot_security.services;
 
+import com.example.springboot_security.data.models.Token;
 import com.example.springboot_security.data.models.User;
 import com.example.springboot_security.data.repositories.UserRepository;
 import com.example.springboot_security.dtos.request.LoginRequest;
 
+import com.example.springboot_security.dtos.request.PasswordRequest;
+import com.example.springboot_security.dtos.request.PasswordResetRequest;
 import com.example.springboot_security.dtos.request.UserRequest;
 import com.example.springboot_security.dtos.response.JwtTokenResponse;
 import com.example.springboot_security.dtos.response.UserResponse;
@@ -14,7 +17,6 @@ import com.example.springboot_security.security.UserPrincipal;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -81,6 +83,38 @@ public class AuthServiceImpl implements AuthService{
         User user = internalDatabaseFindUserByEmail(loginRequest.getEmail());
         return new JwtTokenResponse(token , user.getEmail());
     }
+
+    @Override
+    public void updatePassword(PasswordRequest passwordRequest)throws AuthException {
+
+        String email = passwordRequest.getEmail();
+        String oldPassword = passwordRequest.getOldPassword();
+        String newPassword = passwordRequest.getPassword();
+
+        User userToUpdatePassword = userRepository.findByEmail(email).orElseThrow(()->
+                new AuthException("User with email does not exist "));
+
+        boolean checkForPasswordMatch = passwordEncoder.matches(oldPassword, userToUpdatePassword.getPassword());
+
+        if (!checkForPasswordMatch) {
+            throw new AuthException("Passwords do not match");
+        }
+
+        userToUpdatePassword.setPassword(passwordEncoder.encode(newPassword));
+
+        save(userToUpdatePassword);
+    }
+
+    @Override
+    public void resetPassword(PasswordResetRequest passwordResetRequest, String passwordResetToken) throws AuthException {
+
+    }
+
+    @Override
+    public Token generatePasswordResetToken(String email) throws AuthException {
+        return null;
+    }
+
 
     private User internalDatabaseFindUserByEmail(String email) {
         return userRepository.findByEmail(email).orElse(null);
