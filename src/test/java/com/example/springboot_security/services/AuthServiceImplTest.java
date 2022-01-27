@@ -1,10 +1,10 @@
 package com.example.springboot_security.services;
 
-import com.example.springboot_security.data.models.Role;
-import com.example.springboot_security.data.models.RoleName;
-import com.example.springboot_security.data.models.User;
+import com.example.springboot_security.data.models.*;
+import com.example.springboot_security.data.repositories.TokenRepository;
 import com.example.springboot_security.data.repositories.UserRepository;
 import com.example.springboot_security.dtos.request.LoginRequest;
+import com.example.springboot_security.dtos.request.PasswordRequest;
 import com.example.springboot_security.dtos.request.UserRequest;
 import com.example.springboot_security.dtos.response.JwtTokenResponse;
 import com.example.springboot_security.exceptions.AuthException;
@@ -16,6 +16,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -30,6 +31,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -44,6 +46,9 @@ class AuthServiceImplTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private TokenRepository tokenRepository;
 
     @Mock
     private BCryptPasswordEncoder passwordEncoder;
@@ -88,7 +93,7 @@ class AuthServiceImplTest {
     void userCanRegister() throws AuthException{
 
         UserRequest userRequest = new UserRequest();
-        //userRequest.setEmail("goodnews@gmail.com");
+        userRequest.setEmail("goodnews@gmail.com");
 
         //Given
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
@@ -146,5 +151,60 @@ class AuthServiceImplTest {
 
     }
 
+    @Test
+    void userSavedOnDataBaseCanUpdatePasswordTest(){
+        String randomEncoder = UUID.randomUUID().toString();
+
+        //Given
+        PasswordRequest passwordRequest = new PasswordRequest("goodnews@gmail.com", "456Ugc@@@","123Ugc@@@");
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(mockedUser));
+        when(passwordEncoder.matches(anyString(),anyString())).thenReturn(true);
+        when(passwordEncoder.encode(anyString())).thenReturn(randomEncoder);
+
+        //when
+        String expected = passwordRequest.getOldPassword();
+        String actual = mockedUser.getPassword();
+        authService.updatePassword(passwordRequest);
+
+        //Assert
+        verify(passwordEncoder, times(1)).matches(expected, actual);
+        verify(passwordEncoder, times(1)).encode(passwordRequest.getPassword());
+        verify(userRepository, times(1)).findByEmail(passwordRequest.getEmail());
+        verify(userRepository, times(1)).save(mockedUser);
+
+        assertNotEquals(expected, mockedUser.getPassword());
+        assertEquals(randomEncoder, mockedUser.getPassword());
+    }
+
+    @Test
+    void anyTimeLoginMethodIsCalled_withNullEmail_NullPointedExceptionIsCalled(){
+
+        LoginRequest loginRequest = new LoginRequest("null", "456Ugc@@@");
+
+        when(userRepository.findByEmail(loginRequest.getEmail())).thenThrow(new NullPointerException("user email cannot be null"));
+        verify(userRepository, times(0)).findByEmail(loginRequest.getEmail());
+    }
+
+    @Test
+    void resetTokenCanBeGeneratedWhenUserWantToResetPassword() throws AuthException{
+
+        //Given
+        String email = mockedUser.getEmail();
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(mockedUser));
+
+        //when
+        ArgumentCaptor<Token> tokenArgumentCaptor = ArgumentCaptor.forClass(Token.class);
+        authService.generatePasswordResetToken(email);
+
+        //Assert
+
+        verify(userRepository, times(1)).findByEmail(email);
+        verify(tokenRepository, times(1)).save(tokenArgumentCaptor.capture());
+
+        assertNotNull(tokenArgumentCaptor.getValue());
+        assertNotNull(tokenArgumentCaptor.getValue().getToken());
+        assertEquals(TokenType.PASSWORD_RESET, tokenArgumentCaptor.getValue().getType());
+        assertNotNull(tokenArgumentCaptor.getValue().getId());
+    }
 
 }
