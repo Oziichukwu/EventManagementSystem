@@ -18,7 +18,7 @@ public interface AuthService {
 
     void updatePassword(PasswordRequest passwordRequest)throws AuthException, TokenException;
 
-    void resetPassword(PasswordResetRequest passwordResetRequest, String passwordResetToken)throws AuthException;
+    void resetPassword(PasswordResetRequest passwordResetRequest, String passwordResetToken)throws AuthException, TokenException;
 
     Token generatePasswordResetToken(String email)throws AuthException;
 

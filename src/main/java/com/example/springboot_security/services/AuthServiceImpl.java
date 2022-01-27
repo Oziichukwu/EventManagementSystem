@@ -1,7 +1,9 @@
 package com.example.springboot_security.services;
 
 import com.example.springboot_security.data.models.Token;
+import com.example.springboot_security.data.models.TokenType;
 import com.example.springboot_security.data.models.User;
+import com.example.springboot_security.data.repositories.TokenRepository;
 import com.example.springboot_security.data.repositories.UserRepository;
 import com.example.springboot_security.dtos.request.LoginRequest;
 
@@ -11,6 +13,7 @@ import com.example.springboot_security.dtos.request.UserRequest;
 import com.example.springboot_security.dtos.response.JwtTokenResponse;
 import com.example.springboot_security.dtos.response.UserResponse;
 import com.example.springboot_security.exceptions.AuthException;
+import com.example.springboot_security.exceptions.TokenException;
 import com.example.springboot_security.security.CustomUserDetailService;
 import com.example.springboot_security.security.JwtTokenProvider;
 import com.example.springboot_security.security.UserPrincipal;
@@ -24,6 +27,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -35,6 +39,9 @@ public class AuthServiceImpl implements AuthService{
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private TokenRepository tokenRepository;
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
@@ -65,9 +72,6 @@ public class AuthServiceImpl implements AuthService{
         return modelMapper.map(savedUser, UserResponse.class);
     }
 
-    private User save(User user) {
-        return userRepository.save(user);
-    }
 
     @Override
     public JwtTokenResponse login(LoginRequest loginRequest) {
@@ -106,17 +110,50 @@ public class AuthServiceImpl implements AuthService{
     }
 
     @Override
-    public void resetPassword(PasswordResetRequest passwordResetRequest, String passwordResetToken) throws AuthException {
+    public void resetPassword(PasswordResetRequest passwordResetRequest, String passwordResetToken) throws AuthException, TokenException {
 
+        String email = passwordResetRequest.getEmail();
+        String password = passwordResetRequest.getPassword();
+
+        User userToResetPassword = userRepository.findByEmail(email).orElseThrow(()->
+                new AuthException("No user with such email exist"));
+
+        Token token = tokenRepository.findByToken(passwordResetToken).orElseThrow(()->
+                new TokenException("Token does not exist"));
+
+        if (token.getExpiry().isBefore(LocalDateTime.now())){
+            throw new TokenException("This password reset token has expired");
+        }
+
+        if (!token.getId().equals(userToResetPassword.getUserId())){
+            throw new TokenException("This password token does not exist");
+
+        }
+        userToResetPassword.setPassword(passwordEncoder.encode(password));
+        save(userToResetPassword);
     }
 
     @Override
     public Token generatePasswordResetToken(String email) throws AuthException {
-        return null;
+
+        User userToResetPassword = userRepository.findByEmail(email).orElseThrow(()->
+                new AuthException("No user with such email"));
+
+        Token token = new Token();
+        token.setType(TokenType.PASSWORD_RESET);
+        token.setId(userToResetPassword.getUserId());
+        token.setToken(UUID.randomUUID().toString());
+        token.setExpiry(LocalDateTime.now().plusMinutes(30));
+
+        return tokenRepository.save(token);
     }
 
 
     private User internalDatabaseFindUserByEmail(String email) {
         return userRepository.findByEmail(email).orElse(null);
+    }
+
+    private User save(User user) {
+        return userRepository.save(user);
     }
 }
