@@ -57,15 +57,15 @@ public class AuthServiceImpl implements AuthService{
 
 
     @Override
-    public UserResponse register(UserRequest userRequest, String siteUrl) {
+    public UserResponse register(UserRequest userRequest) {
 
         if (userRepository.existsByEmail(userRequest.getEmail())){
             throw new AuthException("Email Already Exist");
         }
 
         User user = modelMapper.map(userRequest, User.class);
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-         user.setVerificationCode(UUID.randomUUID().toString());
+//        user.setPassword(passwordEncoder.encode(user.getPassword()));
+//         user.setVerificationCode(UUID.randomUUID().toString());
 
         User savedUser = save(user);
 

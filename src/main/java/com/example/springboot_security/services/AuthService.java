@@ -14,7 +14,7 @@ import java.io.UnsupportedEncodingException;
 
 public interface AuthService {
 
-    UserResponse register(UserRequest userRequest, String siteUrl);
+    UserResponse register(UserRequest userRequest);
 
     JwtTokenResponse login(LoginRequest loginRequest);
 
