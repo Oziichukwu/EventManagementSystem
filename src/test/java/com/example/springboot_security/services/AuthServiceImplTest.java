@@ -102,7 +102,7 @@ class AuthServiceImplTest {
         //doNothing().when(emailService).sendUserVerificationEmail(any());
 
         //when
-        authService.register(userRequest);
+        authService.register(userRequest, "");
 
         //Assert
         verify(userRepository, times(1)).existsByEmail(mockedUser.getEmail());
