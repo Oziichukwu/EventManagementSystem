@@ -35,7 +35,7 @@ public class User {
     @Column(name = "verification_code")
     private String verificationCode;
 
-    private boolean enabled;
+    //private boolean enabled;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime datePublished;

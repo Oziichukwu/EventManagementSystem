@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.io.UnsupportedEncodingException;
 
 @RequestMapping("/api/v1/goodyTask/auth")
 @RestController
@@ -28,14 +29,19 @@ public class AuthController {
     AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register (@Valid @RequestBody UserRequest userRequest){
+    public ResponseEntity<?> register (@Valid @RequestBody UserRequest userRequest, HttpServletRequest request){
 
         try {
-            UserResponse userResponse = authService.register(userRequest);
+            UserResponse userResponse = authService.register(userRequest, getSiteUrl(request));
             return new ResponseEntity<>(userResponse, HttpStatus.CREATED);
         }catch (AuthException e){
             return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
         }
+    }
+
+    private String getSiteUrl(HttpServletRequest request) {
+        String url = request.getRequestURI().toString();
+        return url.replace(request.getServletPath(),"");
     }
 
     @PostMapping("/login")
