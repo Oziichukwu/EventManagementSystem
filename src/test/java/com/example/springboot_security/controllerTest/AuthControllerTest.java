@@ -28,75 +28,74 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 public class AuthControllerTest {
 
-        @Autowired
-        private MockMvc mockMvc;
+    @Autowired
+    private MockMvc mockMvc;
 
-        private String registerJsonObject;
+    private String registerJsonObject;
 
-        @MockBean
-        private AuthService authService;
+    @MockBean
+    private AuthService authService;
 
 
-        @MockBean
-        private UserRepository userRepository;
+    @MockBean
+    private UserRepository userRepository;
 
-        @Autowired
-        private ObjectMapper objectMapper;
+    @Autowired
+    private ObjectMapper objectMapper;
 
-        @BeforeEach
-        void setUp() throws JsonProcessingException {
-            UserRequest userDto = new UserRequest();
-            userDto.setFirstName("uche");
-            userDto.setLastName("micheal");
-            userDto.setEmail("micheal@gmail.com");
-            userDto.setPassword("password123");
-            registerJsonObject = objectMapper.writeValueAsString(userDto);
+    @BeforeEach
+    void setUp() throws JsonProcessingException {
+        UserRequest userDto = new UserRequest();
+        userDto.setFirstName("uche");
+        userDto.setLastName("vince");
+        userDto.setEmail("vince@gmail.com");
+        userDto.setPassword("password123");
+        registerJsonObject = objectMapper.writeValueAsString(userDto);
+    }
+
+        @AfterEach
+        void tearDown() {
+            userRepository.deleteAll();
         }
 
-//        @AfterEach
-//        void tearDown() {
-//            userRepository.deleteAll();
-//        }
-
-
-
     @Test
-    void WhenUserRegistersWithValidInputReturn201_Status() throws Exception{
+    void WhenUserRegistersWithValidInputReturn201_Status() throws Exception {
 
         mockMvc.perform(post("/api/v1/goodyTask/auth/register")
-                .contentType("application/json")
-                .content(registerJsonObject))
-                .andExpect(status().is(200))
+                        .contentType("application/json")
+                        .content(registerJsonObject))
+                .andExpect(status().is(201))
                 .andDo(print());
     }
 
     @Test
     void whenUserLoginWithValidInput_return200() throws Exception {
 
-        LoginRequest loginRequest = new LoginRequest("test@gmail.com","test123");
+        LoginRequest loginRequest = new LoginRequest("vince@gmail.com", "password123");
 
-             MvcResult mvcResult   = mockMvc.perform(post("/api/v1/goodyTask/auth/login")
-                     .contentType("application/json")
-                     .content(objectMapper.writeValueAsString(loginRequest)))
-                     .andExpect(status().is(200))
-                     .andDo(print())
-                     .andReturn();
-//
-//        int expectedStatus = 200;
-//        int actualStatus = mvcResult.getResponse().getStatus();
-//        assertThat(expectedStatus).isEqualTo(actualStatus);
-    }
-    @Test
-    void whenUserForgetPassword_thenReturn201() throws Exception{
-        when(authService.generatePasswordResetToken(anyString())).thenReturn(new Token());
-        MvcResult mvcResult = mockMvc.perform(get("/api/v1/goodyTask/auth/password/reset/micheal")
-                        .contentType("application/json"))
+        MvcResult mvcResult = mockMvc.perform(post("/api/v1/goodyTask/auth/login")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().is(200))
                 .andDo(print())
-                .andExpect(status().isCreated()).andReturn();
+                .andReturn();
 
-        //Then
-        int expectedStatus = 201;
+        int expectedStatus = 200;
         int actualStatus = mvcResult.getResponse().getStatus();
         assertThat(expectedStatus).isEqualTo(actualStatus);
     }
+
+//    @Test
+//    void whenUserForgetPassword_thenReturn201() throws Exception {
+//        when(authService.generatePasswordResetToken(anyString())).thenReturn(new Token());
+//        MvcResult mvcResult = mockMvc.perform(get("/api/v1/goodyTask/auth/password/reset/vince@gmail.com")
+//                        .contentType("application/json"))
+//                .andDo(print())
+//                .andExpect(status().isCreated()).andReturn();
+//
+//        //Then
+//        int expectedStatus = 201;
+//        int actualStatus = mvcResult.getResponse().getStatus();
+//        assertThat(expectedStatus).isEqualTo(actualStatus);
+//    }
 }

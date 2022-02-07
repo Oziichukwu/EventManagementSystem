@@ -3,6 +3,8 @@ package com.example.springboot_security.services;
 import com.example.springboot_security.data.models.Event;
 import com.example.springboot_security.data.repositories.EventRepository;
 import com.example.springboot_security.dtos.request.EventRequest;
+import com.example.springboot_security.dtos.response.EventResponse;
+import com.example.springboot_security.exceptions.EventAlreadyExistException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,10 +19,15 @@ public class EventServiceImpl implements EventService{
     private EventRepository eventRepository;
 
     @Override
-    public Event create(EventRequest eventRequest) {
+    public EventResponse create(EventRequest eventRequest) {
 
+        if (eventRepository.existsByName(eventRequest.getName())){
+            throw new EventAlreadyExistException("Event with name " + eventRequest.getName() + "already exist");
+        }
         Event event = modelMapper.map(eventRequest, Event.class);
-        return saveEvent(event);
+         Event savedEvent =saveEvent(event);
+
+         return modelMapper.map(savedEvent, EventResponse.class);
     }
 
     private Event saveEvent(Event event) {
