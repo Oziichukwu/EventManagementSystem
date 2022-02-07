@@ -10,9 +10,11 @@ import com.example.springboot_security.dtos.response.UserResponse;
 import com.example.springboot_security.exceptions.AuthException;
 import com.example.springboot_security.exceptions.TokenException;
 
+import java.io.UnsupportedEncodingException;
+
 public interface AuthService {
 
-    UserResponse register(UserRequest userRequest);
+    UserResponse register(UserRequest userRequest, String siteUrl);
 
     JwtTokenResponse login(LoginRequest loginRequest);
 
