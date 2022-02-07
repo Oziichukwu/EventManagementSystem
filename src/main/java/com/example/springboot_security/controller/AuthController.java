@@ -29,19 +29,14 @@ public class AuthController {
     AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register (@Valid @RequestBody UserRequest userRequest, HttpServletRequest request){
+    public ResponseEntity<?> register (@Valid @RequestBody UserRequest userRequest){
 
         try {
-            UserResponse userResponse = authService.register(userRequest, getSiteUrl(request));
+            UserResponse userResponse = authService.register(userRequest);
             return new ResponseEntity<>(userResponse, HttpStatus.CREATED);
         }catch (AuthException e){
             return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
         }
-    }
-
-    private String getSiteUrl(HttpServletRequest request) {
-        String url = request.getRequestURI().toString();
-        return url.replace(request.getServletPath(),"");
     }
 
     @PostMapping("/login")

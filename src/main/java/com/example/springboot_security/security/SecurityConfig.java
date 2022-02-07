@@ -64,10 +64,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 .antMatchers("/api/v1/goodyTask/auth/**")
                 .permitAll()
-//                .antMatchers("/api/v1/checkUsernameAvailability", "/api/v1/checkEmailAvailability")
-//                .permitAll()
-//                .antMatchers(HttpMethod.GET, "/api/v1/goodyTask")
-//                .permitAll()
+
+                .antMatchers(HttpMethod.GET, "/api/v1/goodyTask/create_Event")
+                .permitAll()
                 .anyRequest()
                 .authenticated();
 
